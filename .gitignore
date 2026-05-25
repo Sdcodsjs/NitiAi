@@ -1,0 +1,93 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Cache / local state
+.cache/
+.local/
+.artifact/
+
+# IDE / platform tool metadata (not project code)
+.agents/
+Microsoft/
+
+# Environment / Secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs (may contain request data)
+*.log
+api-server.out.log
+api-server.err.log
+
+# Build debug / CI artefacts
+build_error.txt
+
+# Platform pasted assets (not project code)
+attached_assets/
+
+# Internal dev sandbox (not production app)
+artifacts/mockup-sandbox/
+
+# Test result binaries (generated files)
+test_results/report.pdf
+test_results/screenshots/
+
+# Local dev scripts and test files
+PROJECT.md
+start-api.bat
+start-frontend.ps1
+start-frontend.bat
+test-gemini.ts
+api-test.json
+
+# Vite dev mode output
+artifacts/policybot/dev
+
+# Local build outputs
+/public
+/dist

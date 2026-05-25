@@ -1,0 +1,694 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: PolicyBot API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: policy
+    description: Policy query and retrieval operations
+  - name: gemini
+    description: Gemini AI chat and image operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /policy/query:
+    post:
+      operationId: queryPolicy
+      tags: [policy]
+      summary: Query policy information
+      description: Submit a natural language query and receive a structured, grounded policy response with citations and confidence score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyQueryBody"
+      responses:
+        "200":
+          description: Structured policy response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /policy/compare:
+    post:
+      operationId: comparePolicies
+      tags: [policy]
+      summary: Compare two or more policies
+      description: Compare multiple government policies and return a structured comparison
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyCompareBody"
+      responses:
+        "200":
+          description: Policy comparison result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyComparisonResponse"
+
+  /policy/recommend:
+    post:
+      operationId: recommendPolicies
+      tags: [policy]
+      summary: Recommend policies for a user persona
+      description: Given a user persona or description, suggest the most relevant government policies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyRecommendBody"
+      responses:
+        "200":
+          description: Policy recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRecommendationResponse"
+
+  /policy/schemes:
+    get:
+      operationId: listSchemes
+      tags: [policy]
+      summary: List all available policy schemes
+      description: Returns a list of all government schemes in the knowledge base
+      parameters:
+        - name: sector
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by sector (agriculture, health, education, etc.)
+        - name: ministry
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by ministry name
+      responses:
+        "200":
+          description: List of policy schemes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchemesListResponse"
+
+  /policy/verify:
+    post:
+      operationId: verifyClaim
+      tags: [policy]
+      summary: Verify a policy claim or statement
+      description: User pastes a statement and the system verifies it against retrieved policy documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyClaimBody"
+      responses:
+        "200":
+          description: Claim verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyClaimResponse"
+
+  /policy/impact:
+    post:
+      operationId: simulatePolicyImpact
+      tags: [policy]
+      summary: Simulate policy impact for a user profile
+      description: Given income, land, category and other parameters, returns eligible schemes and estimated benefits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyImpactBody"
+      responses:
+        "200":
+          description: Impact simulation results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyImpactResponse"
+
+  /policy/analytics:
+    get:
+      operationId: getPolicyAnalytics
+      tags: [policy]
+      summary: Get policy usage analytics
+      description: Returns trending queries, sector breakdown and system performance metrics
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyAnalyticsResponse"
+
+  /policy/stats:
+    get:
+      operationId: getPolicyStats
+      tags: [policy]
+      summary: Get policy knowledge base stats
+      description: Returns summary statistics about the policy knowledge base
+      responses:
+        "200":
+          description: Knowledge base statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyStatsResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
+
+    PolicyQueryBody:
+      type: object
+      properties:
+        query:
+          type: string
+          description: The natural language policy question
+        language:
+          type: string
+          description: Language of the query (en, hi, kn, etc.)
+          default: en
+        persona:
+          type: string
+          description: Optional user persona (farmer, student, entrepreneur, etc.)
+      required:
+        - query
+
+    PolicyCompareBody:
+      type: object
+      properties:
+        schemes:
+          type: array
+          items:
+            type: string
+          description: List of scheme names to compare
+          minItems: 2
+        query:
+          type: string
+          description: Optional specific aspect to compare
+      required:
+        - schemes
+
+    PolicyRecommendBody:
+      type: object
+      properties:
+        persona:
+          type: string
+          description: User description or persona (e.g., "small farmer in Karnataka", "college student looking for scholarship")
+        interests:
+          type: array
+          items:
+            type: string
+          description: Areas of interest
+      required:
+        - persona
+
+    CitedChunk:
+      type: object
+      properties:
+        text:
+          type: string
+        scheme:
+          type: string
+        source:
+          type: string
+        relevanceScore:
+          type: number
+      required:
+        - text
+        - scheme
+        - source
+        - relevanceScore
+
+    PolicyResponse:
+      type: object
+      properties:
+        summary:
+          type: string
+        eligibility:
+          type: string
+        benefits:
+          type: string
+        applicationProcess:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitedChunk"
+        confidenceScore:
+          type: number
+        language:
+          type: string
+        noDataFound:
+          type: boolean
+      required:
+        - summary
+        - sources
+        - confidenceScore
+        - noDataFound
+
+    ComparisonRow:
+      type: object
+      properties:
+        aspect:
+          type: string
+        values:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - aspect
+        - values
+
+    PolicyComparisonResponse:
+      type: object
+      properties:
+        schemes:
+          type: array
+          items:
+            type: string
+        comparisonRows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComparisonRow"
+        summary:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitedChunk"
+        confidenceScore:
+          type: number
+      required:
+        - schemes
+        - comparisonRows
+        - summary
+        - sources
+        - confidenceScore
+
+    RecommendedScheme:
+      type: object
+      properties:
+        name:
+          type: string
+        sector:
+          type: string
+        summary:
+          type: string
+        matchReason:
+          type: string
+        eligibilityHighlight:
+          type: string
+        benefitHighlight:
+          type: string
+      required:
+        - name
+        - sector
+        - summary
+        - matchReason
+
+    PolicyRecommendationResponse:
+      type: object
+      properties:
+        persona:
+          type: string
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecommendedScheme"
+        confidenceScore:
+          type: number
+      required:
+        - persona
+        - recommendations
+        - confidenceScore
+
+    SchemeEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sector:
+          type: string
+        ministry:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - sector
+        - ministry
+        - description
+        - tags
+
+    SchemesListResponse:
+      type: object
+      properties:
+        schemes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SchemeEntry"
+        total:
+          type: integer
+      required:
+        - schemes
+        - total
+
+    PolicyStatsResponse:
+      type: object
+      properties:
+        totalSchemes:
+          type: integer
+        sectors:
+          type: array
+          items:
+            type: string
+        ministries:
+          type: array
+          items:
+            type: string
+        totalChunks:
+          type: integer
+        lastUpdated:
+          type: string
+      required:
+        - totalSchemes
+        - sectors
+        - ministries
+        - totalChunks
+        - lastUpdated
+
+    VerifyClaimBody:
+      type: object
+      properties:
+        statement:
+          type: string
+          description: The claim or statement to verify against policy documents
+      required:
+        - statement
+
+    VerifyClaimResponse:
+      type: object
+      properties:
+        verdict:
+          type: string
+          description: "SUPPORTED | NOT_FOUND | PARTIALLY_TRUE | FALSE"
+        explanation:
+          type: string
+        corrections:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitedChunk"
+        confidenceScore:
+          type: number
+      required:
+        - verdict
+        - explanation
+        - sources
+        - confidenceScore
+
+    PolicyImpactBody:
+      type: object
+      properties:
+        annualIncome:
+          type: string
+        landHolding:
+          type: string
+        category:
+          type: string
+        state:
+          type: string
+        occupation:
+          type: string
+        age:
+          type: string
+      required:
+        - annualIncome
+        - category
+        - occupation
+
+    EligibleScheme:
+      type: object
+      properties:
+        name:
+          type: string
+        sector:
+          type: string
+        reason:
+          type: string
+        estimatedBenefit:
+          type: string
+        matchScore:
+          type: number
+        actionRequired:
+          type: string
+      required:
+        - name
+        - sector
+        - reason
+        - matchScore
+
+    PolicyImpactResponse:
+      type: object
+      properties:
+        eligibleSchemes:
+          type: array
+          items:
+            $ref: "#/components/schemas/EligibleScheme"
+        totalEstimatedBenefit:
+          type: string
+        confidenceScore:
+          type: number
+      required:
+        - eligibleSchemes
+        - confidenceScore
+
+    SectorCount:
+      type: object
+      properties:
+        sector:
+          type: string
+        count:
+          type: integer
+      required:
+        - sector
+        - count
+
+    TrendingQuery:
+      type: object
+      properties:
+        query:
+          type: string
+        count:
+          type: integer
+      required:
+        - query
+        - count
+
+    LatencyMetric:
+      type: object
+      properties:
+        stage:
+          type: string
+        ms:
+          type: number
+      required:
+        - stage
+        - ms
+
+    RetrievalMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        description:
+          type: string
+      required:
+        - name
+        - value
+        - description
+
+    PolicyAnalyticsResponse:
+      type: object
+      properties:
+        totalQueries:
+          type: integer
+        avgResponseMs:
+          type: number
+        sectorBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/SectorCount"
+        trendingQueries:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendingQuery"
+        latencyMetrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/LatencyMetric"
+        retrieval:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetrievalMetric"
+      required:
+        - totalQueries
+        - sectorBreakdown
+        - trendingQueries
+        - latencyMetrics
+
+    GeminiConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    GeminiMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    CreateGeminiConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    SendGeminiMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    GeminiConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeminiMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+    GenerateGeminiImageBody:
+      type: object
+      properties:
+        prompt:
+          type: string
+      required:
+        - prompt
+    GenerateGeminiImageResponse:
+      type: object
+      properties:
+        b64_json:
+          type: string
+        mimeType:
+          type: string
+      required:
+        - b64_json
+        - mimeType
+    GeminiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
